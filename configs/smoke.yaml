@@ -1,0 +1,68 @@
+seed: 1337
+deterministic: true
+device: cpu
+
+paths:
+  raw_dir: data/raw
+  processed_dir: data/processed/smoke
+  index_dir: data/index/smoke
+  runs_dir: runs
+  artifacts_dir: artifacts
+
+data:
+  source: toy
+  toy:
+    num_docs: 300
+    num_edges: 1200
+    train_links: 2000
+    val_links: 300
+    test_links: 300
+    context_window_tokens: 64
+
+sparse:
+  max_features: 20000
+
+dense:
+  vocab_size: 65536
+  max_len: 64
+  d_model: 128
+  n_layers: 2
+  n_heads: 4
+  dropout: 0.1
+  embed_dim: 128
+  l2_normalize: true
+
+train:
+  epochs: 1
+  batch_size: 64
+  lr: 0.001
+  weight_decay: 0.01
+  temperature: 0.07
+  grad_clip_norm: 1.0
+  log_every_steps: 25
+
+graph:
+  dim: 128
+  layers: 2
+  neighbors: 0   # 0 => use all neighbors (deterministic; fine for smoke)
+  epochs: 1
+  batch_size: 256
+  lr: 0.005
+  weight_decay: 0.0
+  neg_samples: 5
+
+experiments:
+  - name: sparse_tfidf
+    kind: sparse_tfidf
+
+  # Ablation (exactly as in plan): disable graph embeddings and fusion.
+  - name: dense_text_only
+    kind: dense
+    use_graph: false
+    fusion: none
+
+  # Main model: text + graph with gated residual fusion.
+  - name: dense_text_graph
+    kind: dense
+    use_graph: true
+    fusion: gated_residual

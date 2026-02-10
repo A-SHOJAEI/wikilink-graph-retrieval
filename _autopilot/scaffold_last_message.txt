@@ -1,0 +1,28 @@
+Implemented a standalone repo in `/home/alireza/research-autopilot/generated_projects/wikilink-graph-retrieval` driven by `_autopilot/project_plan.json`.
+
+Key pieces:
+- Data download + checksum verification (Wikimedia `.md5` sidecars): `src/wikilink_graph_retrieval/data/download.py`
+- Data prep pipeline (default toy smoke; optional wikidump): `src/wikilink_graph_retrieval/pipeline/data.py`
+- PyTorch training with reproducibility controls: `src/wikilink_graph_retrieval/train_dense.py`, `src/wikilink_graph_retrieval/train_graph.py`, `src/wikilink_graph_retrieval/utils.py`
+- Baseline + ablation as in plan:
+  - Baseline: `sparse_tfidf`
+  - Ablation: `dense_text_only` (graph disabled)
+  - Main: `dense_text_graph` (GraphSAGE + gated residual fusion)
+  Configured in `configs/smoke.yaml` / `configs/full.yaml`.
+- Evaluation writes:
+  - `artifacts/results.json`
+  - `artifacts/report.md`
+  via `src/wikilink_graph_retrieval/pipeline/eval.py` and `src/wikilink_graph_retrieval/pipeline/report.py`
+- Make targets: `setup data train eval report all` in `Makefile`
+- PEP 668 safe venv bootstrap without `ensurepip`: `scripts/bootstrap_venv.sh` (uses `python3 -m venv --without-pip` + downloaded `get-pip.py`)
+- Pinned deps: `requirements.txt` (CPU-only torch by default to avoid pulling huge CUDA wheels)
+
+Run (smoke, fast, end-to-end):
+```bash
+make all
+```
+
+Full config (will download large dumps and run longer):
+```bash
+make all CONFIG=configs/full.yaml
+```

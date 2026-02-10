@@ -1,0 +1,73 @@
+{
+  "config_path": "configs/smoke.yaml",
+  "data_dir": "data/processed/smoke",
+  "generated_at": "2026-02-10T09:32:13Z",
+  "runs": [
+    {
+      "debug": {
+        "num_docs": 300,
+        "num_queries": 300
+      },
+      "k": 100,
+      "kind": "sparse_tfidf",
+      "metrics": {
+        "mrr@100": 0.12733683648139327,
+        "ndcg@100": 0.30082645912764844,
+        "recall@1": 0.023333333333333334,
+        "recall@10": 0.33,
+        "recall@100": 1.0
+      },
+      "name": "sparse_tfidf"
+    },
+    {
+      "fusion": "none",
+      "k": 100,
+      "kind": "dense",
+      "metrics": {
+        "ece_top1": 0.02227601492797933,
+        "mrr@100": 0.14813513924493668,
+        "ndcg@100": 0.3186163889345153,
+        "recall@1": 0.03666666666666667,
+        "recall@10": 0.36,
+        "recall@100": 1.0
+      },
+      "name": "dense_text_only",
+      "throughput": {
+        "doc_embed_seconds": 0.07679812598507851,
+        "docs_per_sec": 3906.345319653874,
+        "num_docs": 300,
+        "num_queries": 300,
+        "queries_per_sec": 4576.585379740713,
+        "query_embed_seconds": 0.06555105501320213,
+        "search_seconds": 0.0006988770328462124
+      },
+      "use_graph": false
+    },
+    {
+      "fusion": "gated_residual",
+      "k": 100,
+      "kind": "dense",
+      "metrics": {
+        "ece_top1": 0.03181150263730105,
+        "mrr@100": 0.14070387891230302,
+        "ndcg@100": 0.3110518807518961,
+        "recall@1": 0.04666666666666667,
+        "recall@10": 0.31333333333333335,
+        "recall@100": 1.0
+      },
+      "name": "dense_text_graph",
+      "throughput": {
+        "doc_embed_seconds": 0.07529956696089357,
+        "docs_per_sec": 3984.0866569100376,
+        "num_docs": 300,
+        "num_queries": 300,
+        "queries_per_sec": 4474.177644162611,
+        "query_embed_seconds": 0.06705142796272412,
+        "search_seconds": 0.0007089469581842422
+      },
+      "use_graph": true
+    }
+  ],
+  "_autopilot_runtime_seconds": 16.04,
+  "_autopilot_ran_at_utc": "2026-02-10 09:32:14 UTC"
+}

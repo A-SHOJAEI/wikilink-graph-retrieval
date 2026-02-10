@@ -1,0 +1,70 @@
+seed: 1337
+deterministic: false
+device: auto
+
+paths:
+  raw_dir: data/raw/wikidump
+  processed_dir: data/processed/full
+  index_dir: data/index/full
+  runs_dir: runs
+  artifacts_dir: artifacts
+
+data:
+  source: wikidump
+  wikidump:
+    urls:
+      pages_xml: https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles.xml.bz2
+      pagelinks_sql: https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pagelinks.sql.gz
+    # Extraction settings (large; adjust to available disk/compute)
+    top_targets: 200000
+    train_links: 3000000
+    val_links: 200000
+    test_links: 200000
+    context_window_tokens: 256
+    split: page_holdout
+
+sparse:
+  max_features: 200000
+
+dense:
+  vocab_size: 262144
+  max_len: 256
+  d_model: 256
+  n_layers: 4
+  n_heads: 8
+  dropout: 0.1
+  embed_dim: 256
+  l2_normalize: true
+
+train:
+  epochs: 1
+  batch_size: 128
+  lr: 0.0003
+  weight_decay: 0.01
+  temperature: 0.07
+  grad_clip_norm: 1.0
+  log_every_steps: 100
+
+graph:
+  dim: 256
+  layers: 2
+  neighbors: 10
+  epochs: 1
+  batch_size: 2048
+  lr: 0.001
+  weight_decay: 0.0
+  neg_samples: 10
+
+experiments:
+  - name: sparse_tfidf
+    kind: sparse_tfidf
+
+  - name: dense_text_only
+    kind: dense
+    use_graph: false
+    fusion: none
+
+  - name: dense_text_graph
+    kind: dense
+    use_graph: true
+    fusion: gated_residual

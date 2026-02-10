@@ -1,0 +1,17 @@
+# Pinned to versions known to work on Python 3.12.
+numpy==1.26.4
+scipy==1.13.1
+pandas==2.2.2
+pyarrow==16.1.0
+PyYAML==6.0.1
+tqdm==4.66.4
+scikit-learn==1.5.1
+
+# Training
+# Default is CPU-only to keep `make setup` lightweight and avoid pulling CUDA wheels.
+# If you want CUDA wheels, install torch separately (see README).
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.3.1+cpu ; platform_system == "Linux"
+
+# Dev/test (small, fast)
+pytest==8.2.2

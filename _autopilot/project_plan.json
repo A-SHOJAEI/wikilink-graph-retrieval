@@ -1,0 +1,71 @@
+{
+  "repo_name": "wikilink-graph-retrieval",
+  "title": "Graph-Augmented Dense Retrieval for Wikipedia Wikilink Target Prediction",
+  "one_liner": "Train and evaluate a production-grade Transformer bi-encoder augmented with Wikipedia\u2019s link graph to retrieve the correct target page from hyperlink context at million-scale.",
+  "research_question": "Under a strict page-level holdout split, how much does incorporating Wikipedia link-graph structure (via learned node embeddings + neighbor aggregation) improve wikilink target retrieval versus strong sparse (BM25/TF-IDF) and text-only dense baselines?",
+  "dataset": {
+    "name": "Wikimedia Dumps: English Wikipedia pages-articles + pagelinks",
+    "urls": [
+      "https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles.xml.bz2",
+      "https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pagelinks.sql.gz"
+    ],
+    "license": "CC BY-SA 4.0 (Wikipedia content; dumps distributed under the same content license terms)",
+    "approx_size_gb": 25.0,
+    "ingestion_notes": "Pipeline downloads dumps directly (no credentials), streams decompression/parsing, extracts (1) per-page text (title + lead paragraphs) and (2) wikilinks with local context windows around anchors. Build a deterministic documented subset: keep top N target pages by in-link frequency (e.g., N=200k) and sample M link instances (e.g., M=3M train / 200k val / 200k test) with a page-level split (hold out entire source pages to prevent leakage). Expect large temporary disk usage (often 80\u2013150GB) during extraction unless configured to early-stop at N pages / M links."
+  },
+  "method": {
+    "model": "Dual-encoder retrieval with PyTorch: Query encoder = Transformer over anchor-context (e.g., 128\u2013256 tokens); Doc encoder = Transformer over target page title+lead. Learn with in-batch contrastive loss (InfoNCE) over (context, target_page) pairs. Add graph augmentation: learn page node embeddings from the pagelinks graph using a GraphSAGE-style neighbor-mean aggregator (implemented in pure PyTorch with sampled neighbors) and fuse with doc text embedding via a learned gated residual (doc = text + gate(context,text,graph)*graph). Optional second-stage cross-encoder reranker for top-100 candidates to improve Recall@K and MRR.",
+    "baseline": "Sparse retrieval baseline: TF-IDF (or BM25-style scoring) over target page title+lead; query is anchor-context. Evaluate as a pure lexical retriever on the same candidate set and splits.",
+    "ablations": [
+      "Text-only dense retriever (disable graph embeddings and fusion).",
+      "Graph-only target representations (use only learned node embeddings for docs; keep query encoder text-based).",
+      "No gating fusion (simple concat + MLP vs gated residual) to isolate fusion mechanism effect.",
+      "Context window size ablation (64 vs 256 tokens) to quantify how much local context drives disambiguation.",
+      "Reranker ablation (bi-encoder only vs bi-encoder + cross-encoder rerank) to isolate second-stage gains."
+    ],
+    "metrics": [
+      "Recall@1/10/100 on held-out wikilinks (retrieval over candidate target pages).",
+      "MRR@100 and nDCG@100.",
+      "Calibration diagnostics for top-1 confidence (ECE on softmax over candidate set sampled negatives).",
+      "Throughput and cost metrics (docs/sec, queries/sec, GPU memory, index build time)."
+    ]
+  },
+  "compute": {
+    "gpus": 2,
+    "expected_hours": 20.0
+  },
+  "risks": [
+    "Download time and disk pressure: dumps are large; extraction can temporarily balloon disk usage depending on settings.",
+    "Parsing complexity: Wikipedia markup and redirects/disambiguation can introduce noisy targets; requires robust filtering (redirect resolution, namespace filtering, minimum-text thresholds).",
+    "Evaluation leakage if splits are not page-level: link contexts from the same source page can be near-duplicates; must hold out entire source pages and optionally entire target pages for a tougher setting.",
+    "Graph scale: full pagelinks is huge; must subset to top-linked pages and neighbor-sample to keep training tractable on a single machine.",
+    "Bias/coverage: frequent entities dominate; needs stratified reporting by target popularity buckets to avoid misleading average improvements."
+  ],
+  "execution_steps": [
+    "Create environment: `python -m venv .venv && source .venv/bin/activate && pip install -U pip`.",
+    "Install deps: `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 && pip install transformers datasets accelerate sentencepiece scikit-learn numpy pandas pyarrow faiss-gpu tqdm`.",
+    "Download dumps: `python scripts/download_wiki.py --out data/raw --latest` (fetch pages-articles + pagelinks from Wikimedia URLs).",
+    "Extract corpus + link contexts: `python scripts/extract_wikilinks.py --pages_xml data/raw/enwiki-latest-pages-articles.xml.bz2 --pagelinks_sql data/raw/enwiki-latest-pagelinks.sql.gz --out data/processed --top_targets 200000 --train_links 3000000 --val_links 200000 --test_links 200000 --split page_holdout`.",
+    "Build sparse baseline index: `python scripts/build_tfidf_index.py --corpus data/processed/target_pages.parquet --out data/index/tfidf` and evaluate: `python scripts/eval_sparse.py --queries data/processed/test_links.parquet --index data/index/tfidf --k 100`.",
+    "Train text-only bi-encoder: `accelerate launch train_biencoder.py --train data/processed/train_links.parquet --corpus data/processed/target_pages.parquet --model distilroberta-base --fp16 --batch_size 128 --gpus 2 --out runs/text_only`.",
+    "Train graph embeddings: `python train_graphsage.py --edges data/processed/pagelinks_edges.parquet --nodes data/processed/target_pages.parquet --neighbors 10 --layers 2 --dim 256 --out runs/graph`.",
+    "Train fused model (text+graph): `accelerate launch train_fused.py --train data/processed/train_links.parquet --corpus data/processed/target_pages.parquet --text_ckpt runs/text_only --graph_ckpt runs/graph --fusion gated_residual --out runs/text_graph`.",
+    "Evaluate dense retrievers: `python eval_dense.py --queries data/processed/test_links.parquet --corpus data/processed/target_pages.parquet --ckpt runs/text_only --k 100` and `python eval_dense.py --ckpt runs/text_graph --k 100`.",
+    "Run ablations (toggle flags in the same training/eval scripts) and produce a single table + plots: `python scripts/report.py --runs runs/ --out reports/wikilink_retrieval.html`."
+  ],
+  "generated_at_utc": "2026-02-10 09:10:27 UTC",
+  "hardware": {
+    "cpu_cores": 24,
+    "cpu_threads": 48,
+    "ram_gb": 251.59,
+    "gpu_count": 2,
+    "gpu_names": [
+      "NVIDIA GeForce RTX 3090",
+      "NVIDIA GeForce RTX 3090"
+    ],
+    "gpu_vram_gb": [
+      24.0,
+      24.0
+    ]
+  }
+}

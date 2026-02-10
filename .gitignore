@@ -1,0 +1,14 @@
+.venv/
+.venv.bak-*/
+.cache/
+__pycache__/
+.pytest_cache/
+artifacts/*
+!artifacts/.gitkeep
+runs/*
+!runs/.gitkeep
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/index/
