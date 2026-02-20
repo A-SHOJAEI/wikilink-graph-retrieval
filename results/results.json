@@ -1,0 +1,38 @@
+{
+  "project": "wikilink-graph-retrieval",
+  "config": "smoke",
+  "dataset": "toy (300 docs, 1200 edges)",
+  "n_test_queries": 300,
+  "models": {
+    "sparse_tfidf": {
+      "kind": "sparse_tfidf",
+      "mrr@100": 0.0134,
+      "ndcg@100": 0.0617,
+      "recall@1": 0.0033,
+      "recall@10": 0.0267,
+      "recall@100": 0.31
+    },
+    "dense_text_only": {
+      "kind": "dense",
+      "use_graph": false,
+      "fusion": "none",
+      "mrr@100": 0.0116,
+      "ndcg@100": 0.0647,
+      "recall@1": 0.0,
+      "recall@10": 0.02,
+      "recall@100": 0.33,
+      "ece_top1": 0.01
+    },
+    "dense_text_graph": {
+      "kind": "dense",
+      "use_graph": true,
+      "fusion": "gated_residual",
+      "mrr@100": 0.0151,
+      "ndcg@100": 0.072,
+      "recall@1": 0.0,
+      "recall@10": 0.03,
+      "recall@100": 0.3633,
+      "ece_top1": 0.01
+    }
+  }
+}

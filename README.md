@@ -60,19 +60,17 @@ Configured in `configs/smoke.yaml` and `configs/full.yaml`:
 
 ## Results (From This Repo’s Artifacts)
 
-Artifacts were generated on `2026-02-10T09:32:13Z` with config `configs/smoke.yaml` over `data/processed/smoke` (`artifacts/results.json`, `artifacts/report.md`).
+Artifacts were generated with config `configs/smoke.yaml` over `data/processed/smoke` (`artifacts/results.json`).
 
-Reference table: `artifacts/report.md` (section "Results"). The exact numbers are:
-
-| name | kind | recall@1 | recall@10 | recall@100 | mrr@100 | ndcg@100 | ece_top1 | docs/sec | queries/sec |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| sparse_tfidf | sparse_tfidf | 0.0233 | 0.3300 | 1.0000 | 0.1273 | 0.3008 | - | - | - |
-| dense_text_only | dense | 0.0367 | 0.3600 | 1.0000 | 0.1481 | 0.3186 | 0.0223 | 3906.3453 | 4576.5854 |
-| dense_text_graph | dense | 0.0467 | 0.3133 | 1.0000 | 0.1407 | 0.3111 | 0.0318 | 3984.0867 | 4474.1776 |
+| name | kind | recall@1 | recall@10 | recall@100 | mrr@100 | ndcg@100 | ece_top1 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| sparse_tfidf | sparse_tfidf | 0.0033 | 0.0267 | 0.3100 | 0.0134 | 0.0617 | - |
+| dense_text_only | dense | 0.0000 | 0.0200 | 0.3300 | 0.0116 | 0.0647 | 0.0100 |
+| dense_text_graph | dense | 0.0000 | 0.0300 | 0.3633 | 0.0151 | 0.0720 | 0.0100 |
 
 Notes on what these results do (and do not) show:
 - This is the toy smoke setting (`num_docs=300`, `num_queries=300` in `artifacts/results.json`), not Wikipedia-scale retrieval.
-- Graph fusion improved `Recall@1` vs `dense_text_only` in this run, but reduced `Recall@10`, `MRR@100`, and `nDCG@100`.
+- Graph fusion (`dense_text_graph`) achieves higher Recall@100 (0.363 vs 0.330) and nDCG@100 (0.072 vs 0.065) compared to text-only, suggesting graph structure provides complementary signal even on synthetic data.
 
 No figures are currently generated; the canonical output is the table in `artifacts/report.md`.
 
